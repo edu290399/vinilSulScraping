@@ -1,5 +1,6 @@
 import json
 import time
+import re
 from collections import deque
 from typing import Dict, List, Optional, Set
 
@@ -12,10 +13,7 @@ from urllib.parse import urljoin
 # Configuração e constantes
 # =============================
 
-# URLs iniciais (páginas de categorias/listagens) para começar o scraping
-start_urls: List[str] = [
-    "https://www.vinilsul.com.br/categoria-produto/portfolio-estamparia-digital/",
-]
+# As URLs iniciais (páginas de categorias/listagens) serão informadas pelo usuário em tempo de execução
 
 # Cabeçalhos para simular um navegador real
 DEFAULT_HEADERS = {
@@ -277,9 +275,34 @@ def scrape_product_details(product_url: str) -> Dict:
 # Módulo 3: Orquestração Principal e Geração do Arquivo
 # =============================
 
+def parse_start_urls_from_input(user_input: str) -> List[str]:
+    """Converte a entrada do usuário (separada por vírgula/espaço/linha) em lista de URLs válidas."""
+    # separa por vírgulas ou quebras de linha
+    raw_parts = re.split(r"[\n,]", user_input)
+    urls: List[str] = []
+    for part in raw_parts:
+        cleaned = part.strip()
+        if not cleaned:
+            continue
+        # validação simples de URL
+        if not cleaned.startswith("http://") and not cleaned.startswith("https://"):
+            continue
+        urls.append(cleaned)
+    return urls
+
+
 def main() -> None:
+    # Pergunta URLs ao usuário
+    print("Informe a(s) URL(s) de categoria/listagem da Vinilsul para scraping.")
+    print("- Você pode colar uma única URL ou várias separadas por vírgula ou por linhas.")
+    user_input = input("URL(s): ").strip()
+    start_urls = parse_start_urls_from_input(user_input)
+    if not start_urls:
+        print("Nenhuma URL válida fornecida. Encerrando.")
+        return
+
     # 1) Descobrir todas as URLs de produtos
-    print("Descobrindo URLs de produtos a partir das páginas iniciais...")
+    print("Descobrindo URLs de produtos a partir das páginas fornecidas...")
     product_urls = discover_product_urls(start_urls)
     print(f"Total de produtos encontrados: {len(product_urls)}")
 

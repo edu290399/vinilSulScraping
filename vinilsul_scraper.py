@@ -14,7 +14,7 @@ from urllib.parse import urljoin
 
 # URLs iniciais (páginas de categorias/listagens) para começar o scraping
 start_urls: List[str] = [
-    "https://www.vinilsul.com.br/categoria-produto/suprimentos/",
+    "https://www.vinilsul.com.br/categoria-produto/portfolio-estamparia-digital/",
 ]
 
 # Cabeçalhos para simular um navegador real
@@ -92,13 +92,28 @@ def discover_product_urls(start_urls: List[str]) -> List[str]:
 
         soup = BeautifulSoup(html, "lxml")
 
-        # a) Coletar links de produtos
-        for a in soup.select("a.button.product_type_simple"):
+        # a) Coletar links de produtos (usar permalink do produto, não botões de carrinho)
+        link_selectors = [
+            "a.woocommerce-LoopProduct-link",
+            "a.woocommerce-loop-product__link",
+            "h2.woocommerce-loop-product__title a",
+            # Fallbacks (alguns temas usam diferentes botões, mas geralmente não são permalinks):
+            "a.button.product_type_simple",
+            "a.button.product_type_variable",
+            "a.button.product_type_grouped",
+            "a.button.product_type_external",
+        ]
+        for a in soup.select(", ".join(link_selectors)):
             href = a.get("href")
             if not href:
                 continue
             full_url = absolute_url(listing_url, href)
-            product_urls.add(full_url)
+            # Normalizar e filtrar para garantir que seja a página de produto
+            if "/produto/" not in full_url:
+                continue
+            # Remover querystrings comuns (ex.: add-to-cart)
+            normalized_url = full_url.split("?", 1)[0]
+            product_urls.add(normalized_url)
 
         # b) Descobrir próxima página de paginação
         next_link = soup.select_one("a.next.page-numbers")

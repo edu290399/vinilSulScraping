@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Enviar URL • n8n Webhook</title>
+    <style>
+      :root {
+        --bg: #0f172a;           /* slate-900 */
+        --panel: #0b1224;        /* slightly lighter than bg */
+        --muted: #94a3b8;        /* slate-400 */
+        --text: #e2e8f0;         /* slate-200 */
+        --primary: #6366f1;      /* indigo-500 */
+        --primary-600: #5458ee;  /* hover */
+        --success: #22c55e;      /* green-500 */
+        --error: #ef4444;        /* red-500 */
+        --ring: rgba(99, 102, 241, 0.35);
+        --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+        background: radial-gradient(1200px 600px at 20% -10%, rgba(99,102,241,0.20), transparent 60%),
+                    radial-gradient(800px 400px at 100% 0%, rgba(16,185,129,0.12), transparent 60%),
+                    var(--bg);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 560px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        backdrop-filter: blur(6px);
+        padding: 28px;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: radial-gradient(120px 60px at 50% 0%, rgba(99,102,241,0.35), rgba(99,102,241,0.18));
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+      .badge svg { width: 28px; height: 28px; color: #e2e8f0; opacity: 0.95; }
+
+      .title {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 14px;
+        margin-top: 4px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+        margin: 14px 0 8px;
+      }
+
+      .input {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        padding: 14px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(2,6,23,0.65);
+        color: var(--text);
+        font-size: 15px;
+        outline: none;
+        transition: box-shadow 140ms ease, border-color 140ms ease;
+      }
+
+      .input::placeholder { color: #64748b; } /* slate-500 */
+
+      .input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 6px var(--ring);
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: linear-gradient(180deg, var(--primary), var(--primary-600));
+        color: white;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        cursor: pointer;
+        transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+        box-shadow: 0 10px 22px rgba(99,102,241,0.35);
+      }
+      .btn:hover { transform: translateY(-1px); filter: saturate(1.05); }
+      .btn:active { transform: translateY(0); }
+      .btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,0.5);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .feedback {
+        font-size: 14px;
+        margin-top: 8px;
+        min-height: 20px;
+      }
+      .feedback.success { color: var(--success); }
+      .feedback.error { color: var(--error); }
+
+      .footnote {
+        margin-top: 22px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .endpoint {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        word-break: break-all;
+        color: #c7d2fe; /* indigo-200 */
+      }
+
+      @media (max-width: 420px) {
+        .title { font-size: 16px; }
+        .subtitle { font-size: 13px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" role="main">
+      <div class="header" aria-hidden="true">
+        <div class="badge" title="n8n">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5l3-3m-1.8-1.8l-3.6 3.6a3 3 0 104.24 4.24l1.8-1.8m1.8-1.8l1.8-1.8a3 3 0 10-4.24-4.24l-1.8 1.8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="title">Enviar Link dos produtos</div>
+          <div class="subtitle">Envie o link que será usado para extração dos dados</div>
+        </div>
+      </div>
+
+      <form id="urlForm" novalidate>
+        <label for="urlInput">URL</label>
+        <input
+          id="urlInput"
+          name="url"
+          class="input"
+          type="url"
+          placeholder="https://exemplo.com/recurso"
+          autocomplete="off"
+          inputmode="url"
+          required
+          aria-required="true"
+        />
+
+        <div class="actions">
+          <button id="submitBtn" type="submit" class="btn">
+            <span>Enviar</span>
+          </button>
+          <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="footnote">
+          Endpoint do webhook: <span class="endpoint" id="endpointLabel"></span>
+        </div>
+      </form>
+    </main>
+
+    <script>
+      // Altere apenas o caminho do webhook conforme o nome do seu fluxo no n8n
+      // Ex.: http://162.240.97.79/webhook/meu-fluxo
+      const WEBHOOK_URL = 'http://162.240.97.79/webhook-endpoint';
+
+      const form = document.getElementById('urlForm');
+      const input = document.getElementById('urlInput');
+      const btn = document.getElementById('submitBtn');
+      const feedback = document.getElementById('feedback');
+      const endpointLabel = document.getElementById('endpointLabel');
+      endpointLabel.textContent = WEBHOOK_URL;
+
+      function isValidUrl(value) {
+        try {
+          new URL(value);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function setLoading(loading) {
+        if (loading) {
+          btn.setAttribute('disabled', 'disabled');
+          const spinner = document.createElement('span');
+          spinner.className = 'spinner';
+          spinner.setAttribute('aria-hidden', 'true');
+          btn.prepend(spinner);
+        } else {
+          btn.removeAttribute('disabled');
+          const spin = btn.querySelector('.spinner');
+          if (spin) spin.remove();
+        }
+      }
+
+      function showMessage(msg, type) {
+        feedback.textContent = msg;
+        feedback.classList.remove('success', 'error');
+        if (type) feedback.classList.add(type);
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const value = (input.value || '').trim();
+
+        // Validação básica
+        if (!value) {
+          showMessage('Por favor, informe um URL.', 'error');
+          input.focus();
+          return;
+        }
+        if (!isValidUrl(value)) {
+          showMessage('O valor informado não parece ser um URL válido.', 'error');
+          input.focus();
+          return;
+        }
+
+        showMessage('Enviando...', null);
+        setLoading(true);
+
+        try {
+          const res = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json, text/plain, */*',
+            },
+            body: JSON.stringify({ url: value }),
+            mode: 'cors'
+          });
+
+          if (res.ok) {
+            showMessage('URL enviado com sucesso! ✅', 'success');
+            input.value = '';
+          } else {
+            const text = await res.text().catch(() => '');
+            showMessage(`Falha ao enviar (HTTP ${res.status}). ${text || ''}`.trim(), 'error');
+          }
+        } catch (err) {
+          showMessage('Erro de rede ou CORS ao enviar. Verifique o endpoint no n8n.', 'error');
+        } finally {
+          setLoading(false);
+        }
+      });
+    </script>
+  </body>
+  </html>
+
+
